@@ -1,6 +1,7 @@
 import { Component } from '@angular/core';
 import { WeatherService } from './services/weather.service';
-import { tap } from 'rxjs/operators';
+import { map, switchMap, tap } from 'rxjs/operators';
+import * as moment from 'moment';
 
 @Component({
   selector: 'app-root',
@@ -16,6 +17,14 @@ export class AppComponent {
     return this.weatherService.getTemperatureData();
   }
 
-  tempData$ = this.weatherService.getTemperatureData().pipe(tap(console.log));
+  tempData$ = this.weatherService.getTemperatureData<'temperature_2m'>().pipe(
+    map(data => {
+      const values = data.hourly.temperature_2m;
+      return data.hourly.time.map((t, idx) => {
+        const utcTimestamp = moment.utc(t).valueOf();
+        return [utcTimestamp, values[idx]]
+      })
+    }),
+  );
 
 }
