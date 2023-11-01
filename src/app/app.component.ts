@@ -1,7 +1,9 @@
 import { Component } from '@angular/core';
-import { WeatherService } from './services/weather.service';
-import { map, switchMap, tap } from 'rxjs/operators';
+import { Period, WeatherService } from './services/weather.service';
+import { catchError, filter, map, repeat, shareReplay, switchMap } from 'rxjs/operators';
 import * as moment from 'moment';
+import { FormControl, FormGroup, Validators } from '@angular/forms';
+import { Subject, of } from 'rxjs';
 
 @Component({
   selector: 'app-root',
@@ -13,11 +15,23 @@ export class AppComponent {
 
   ngOnInit(): void {}
 
-  getTemperature() {
-    return this.weatherService.getTemperatureData();
-  }
+  range = new FormGroup({
+    start: new FormControl<moment.MomentInput>(null, {
+      nonNullable: true,
+      validators: [
+          Validators.required, 
+      ]}),
+    end: new FormControl<moment.MomentInput>(null, {
+      nonNullable: true,
+      validators: [
+          Validators.required, 
+      ]}),
+  });
 
-  tempData$ = this.weatherService.getTemperatureData<'temperature_2m'>().pipe(
+  currentPeriod$ = this.range.valueChanges.pipe(filter(() => this.range.valid))
+
+  tempData$ = this.currentPeriod$.pipe(
+    switchMap(timePeriod => this.weatherService.getTemperatureData<'temperature_2m'>(timePeriod)),
     map(data => {
       const values = data.hourly.temperature_2m;
       return data.hourly.time.map((t, idx) => {
@@ -25,6 +39,13 @@ export class AppComponent {
         return [utcTimestamp, values[idx]]
       })
     }),
+    shareReplay(1),
+    catchError(e => {
+      console.log(e);
+      return of(null);
+    }),
+    repeat(),
   );
-
 }
+
+
