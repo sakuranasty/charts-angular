@@ -10,8 +10,9 @@
 </div>
 
 <div class="content" role="main">
-  <app-line-chart></app-line-chart>
-  <ng-container *ngIf="tempData$ | async"></ng-container>
+  <ng-container *ngIf="tempData$ | async as tempData">
+    <app-line-chart [seriesData]="tempData"></app-line-chart>
+  </ng-container>
 
 </div>
 
