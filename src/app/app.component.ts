@@ -1,6 +1,14 @@
 import { Component } from '@angular/core';
 import { Period, WeatherService } from './services/weather.service';
-import { catchError, filter, map, repeat, shareReplay, switchMap } from 'rxjs/operators';
+import {
+  catchError,
+  filter,
+  map,
+  repeat,
+  shareReplay,
+  startWith,
+  switchMap,
+} from 'rxjs/operators';
 import * as moment from 'moment';
 import { FormControl, FormGroup, Validators } from '@angular/forms';
 import { Subject, of } from 'rxjs';
@@ -8,7 +16,7 @@ import { Subject, of } from 'rxjs';
 @Component({
   selector: 'app-root',
   templateUrl: './app.component.html',
-  styleUrls: ['./app.component.scss']
+  styleUrls: ['./app.component.scss'],
 })
 export class AppComponent {
   constructor(private readonly weatherService: WeatherService) {}
@@ -18,34 +26,38 @@ export class AppComponent {
   range = new FormGroup({
     start: new FormControl<moment.MomentInput>(null, {
       nonNullable: true,
-      validators: [
-          Validators.required, 
-      ]}),
+      validators: [Validators.required],
+    }),
     end: new FormControl<moment.MomentInput>(null, {
       nonNullable: true,
-      validators: [
-          Validators.required, 
-      ]}),
+      validators: [Validators.required],
+    }),
   });
 
-  currentPeriod$ = this.range.valueChanges.pipe(filter(() => this.range.valid))
+  currentPeriod$ = this.range.valueChanges.pipe(
+    filter(() => this.range.valid),
+    startWith({
+      start: moment().subtract({ days: 10 }),
+      end: moment().subtract({ days: 2 }),
+    }),
+  );
 
   tempData$ = this.currentPeriod$.pipe(
-    switchMap(timePeriod => this.weatherService.getTemperatureData<'temperature_2m'>(timePeriod)),
-    map(data => {
+    switchMap((timePeriod) =>
+      this.weatherService.getTemperatureData<'temperature_2m'>(timePeriod)
+    ),
+    map((data) => {
       const values = data.hourly.temperature_2m;
       return data.hourly.time.map((t, idx) => {
         const utcTimestamp = moment.utc(t).valueOf();
-        return [utcTimestamp, values[idx]]
-      })
+        return [utcTimestamp, values[idx]];
+      });
     }),
     shareReplay(1),
-    catchError(e => {
+    catchError((e) => {
       console.log(e);
       return of(null);
     }),
-    repeat(),
+    repeat()
   );
 }
-
-
