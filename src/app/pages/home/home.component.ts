@@ -2,7 +2,7 @@ import { ChangeDetectorRef, Component, Input, OnChanges, OnInit } from '@angular
 import { Period, WeatherService } from '../../services/weather.service';
 import { FormGroup, FormControl, Validators } from '@angular/forms';
 import * as moment from 'moment';
-import { filter, startWith, switchMap, map, shareReplay, catchError, of, repeat } from 'rxjs';
+import { filter, startWith, switchMap, map, shareReplay, catchError, of, repeat, tap } from 'rxjs';
 import { ChangeDetectionStrategy } from '@angular/core';
 
 @Component({
@@ -15,10 +15,6 @@ export class HomeComponent implements OnInit {
     private readonly weatherService: WeatherService) {}
 
   ngOnInit(): void {}
-
-  getTemperature() {
-    return this.weatherService.getTemperatureData();
-  }
 
   initialDatePeriod: Period = {
     start: moment().subtract({days: 12}),
@@ -54,25 +50,29 @@ export class HomeComponent implements OnInit {
       }
       return false;
     }),
-    startWith(this.initialDatePeriod)
+    startWith(this.initialDatePeriod),
+    tap(v => this.weatherService.setCurrentPeriod(v))
   );
 
-  tempData$ = this.currentPeriod$.pipe(
-    switchMap((timePeriod) =>
-      this.weatherService.getTemperatureData<'temperature_2m'>(timePeriod)
-    ),
-    map((data) => {
-      const values = data.hourly.temperature_2m;
-      return data.hourly.time.map((t, idx) => {
-        const utcTimestamp = moment.utc(t).valueOf();
-        return [utcTimestamp, values[idx]];
-      });
-    }),
-    shareReplay(1),
-    catchError((e) => {
-      console.log(e);
-      return of(null);
-    }),
-    repeat()
-  );
+  tempData$ = this.weatherService.temperatureData$;
+  pressureData$ = this.weatherService.pressureData$;
+
+  // tempData1$ = this.currentPeriod$.pipe(
+  //   switchMap((timePeriod) =>
+  //     this.weatherService.getTemperatureData(timePeriod)
+  //   ),
+  //   map((data) => {
+  //     const values = data.hourly.temperature_2m;
+  //     return data.hourly.time.map((t, idx) => {
+  //       const utcTimestamp = moment.utc(t).valueOf();
+  //       return [utcTimestamp, values[idx]];
+  //     });
+  //   }),
+  //   shareReplay(1),
+  //   catchError((e) => {
+  //     console.log(e);
+  //     return of(null);
+  //   }),
+  //   repeat()
+  // );
 }

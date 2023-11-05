@@ -27,10 +27,9 @@ export class LineChartComponent implements OnInit {
   constructor() {}
 
   data$ = new ReplaySubject<any[]>(1);
-  mode$ = new ReplaySubject<'line' | 'histogram'>(1);
 
-  @Input() set seriesData(v: any[]) {
-    this.data$.next(v);
+  @Input() set series(v: any[]|null) {
+    this.data$.next(v || []);
   }
 
   mode = new FormControl<'line' | 'histogram'>('line', Validators.required);
@@ -44,7 +43,7 @@ export class LineChartComponent implements OnInit {
       this.data$,
       this.mode.valueChanges.pipe(startWith('line')),
     ]).pipe(
-      map(([data, mode]) => {
+      map(([temp, mode]) => {
         return {
           xAxis: {
             type: 'datetime',
@@ -52,8 +51,8 @@ export class LineChartComponent implements OnInit {
           series: [
             {
               type: mode,
-              data,
-            },
+              data: temp,
+            }
           ],
         } as Highcharts.Options;
       }),

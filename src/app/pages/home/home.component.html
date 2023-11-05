@@ -12,7 +12,7 @@
   {{ range.valid }}
 
   <mat-date-range-picker #picker></mat-date-range-picker>
-  <ng-container *ngIf="tempData$ | async as tempData">
-    <app-line-chart [seriesData]="tempData"></app-line-chart>
-  </ng-container>
+  <app-line-chart [series]="tempData$ | async"></app-line-chart>
+  <app-line-chart [series]="pressureData$ | async"></app-line-chart>
 </div>
+<ng-container *ngIf="currentPeriod$ | async"></ng-container>
