@@ -23,6 +23,11 @@ export class AppComponent {
 
   ngOnInit(): void {}
 
+  initialDatePeriod: Period = {
+    start: moment().subtract({days: 12}),
+    end: moment().subtract({days: 1}),
+  }
+
   range = new FormGroup({
     start: new FormControl<moment.MomentInput>(null, {
       nonNullable: true,
@@ -35,11 +40,24 @@ export class AppComponent {
   });
 
   currentPeriod$ = this.range.valueChanges.pipe(
-    filter(() => this.range.valid),
-    startWith({
-      start: moment().subtract({ days: 10 }),
-      end: moment().subtract({ days: 2 }),
+    filter(v => {
+      if(!v.start || !v.end) {
+        return false;
+      }
+      v.start = moment(v.start);
+      v.end = moment(v.end);
+      if (!v.start.isAfter(v.end)) {
+        return true;
+      }
+      if (
+        v.end.isBefore(moment().subtract({ days: 1 })) &&
+        v.start.isBefore(moment().subtract({ days: 1 }))
+      ) {
+        return true;
+      }
+      return false;
     }),
+    startWith(this.initialDatePeriod)
   );
 
   tempData$ = this.currentPeriod$.pipe(
