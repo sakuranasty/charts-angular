@@ -9,6 +9,7 @@ import {
   map,
   of,
   repeat,
+  shareReplay,
   switchMap,
 } from 'rxjs';
 
@@ -45,7 +46,8 @@ export class WeatherService {
     map((data) => {
       const values = data.hourly.temperature_2m;
       return this.transformData(data.hourly.time, values);
-    })
+    }),
+    shareReplay(1)
   );
 
   readonly pressureData$ = this.currentPeriod$.pipe(
@@ -55,7 +57,8 @@ export class WeatherService {
     map((data) => {
       const values = data.hourly.surface_pressure;
       return this.transformData(data.hourly.time, values);
-    })
+    }),
+    shareReplay(1)
   );
 
   setCurrentPeriod(period: Period) {
@@ -88,7 +91,6 @@ export class WeatherService {
           console.log(e);
           return EMPTY;
         }),
-        repeat()
       );
   }
   private transformData(time: string[], values: number[]) {
