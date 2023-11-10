@@ -9,4 +9,7 @@ export class AppComponent {
   constructor() {}
 
   ngOnInit(): void {}
+  hint = 'some hint'
+
+  disabled = false;
 }
